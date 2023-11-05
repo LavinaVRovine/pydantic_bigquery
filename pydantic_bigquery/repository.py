@@ -63,7 +63,7 @@ class BigQueryRepository:
 
     def create_table(
         self,
-        model: Type[BigQueryModelBase],
+        model: BigQueryModelBase,
         exists_ok: bool = True,
         description: Optional[str] = None,
         labels: Optional[Dict[str, Any]] = None,
