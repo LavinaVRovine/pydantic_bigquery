@@ -76,8 +76,8 @@ class BigQueryRepository:
             description=description,
             labels=labels,
         )
-
-        schema = model.get_bigquery_schema()
+        model_instance = model.model_construct()
+        schema = model_instance.get_bigquery_schema()
         table = bigquery.Table(
             f"{self._project_id}.{self._dataset_id}.{model.__TABLE_NAME__}",
             schema,
