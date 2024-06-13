@@ -12,7 +12,11 @@ from pydantic.fields import FieldInfo
 from .constants import BigQueryMode
 from types import UnionType, NoneType
 
+from typing import Optional, get_origin, get_args, Union, Annotated
 
+
+def is_optional(field):
+    return get_origin(field) is Union and type(None) in get_args(field)
 class BigQueryModelBase(BaseModel):
     __TABLE_NAME__: str
     __PARTITION_FIELD__: Optional[str] = None
@@ -46,6 +50,14 @@ class BigQueryModelBase(BaseModel):
             if len(args_non_none) > 1:
                 raise NotImplementedError
             return args_non_none[0]
+        if is_optional(type__):
+            args_non_none = [t for t in get_args(type__) if t != NoneType]
+            if len(args_non_none) > 1:
+                raise NotImplementedError
+            if get_origin(args_non_none[0]) is Annotated:
+                return get_args(args_non_none[0])[0]
+            else:
+                return args_non_none[0]
         return type__
 
     @classmethod
@@ -72,19 +84,20 @@ class BigQueryModelBase(BaseModel):
             return bigquery.enums.SqlTypeNames.DATE
         if cls.get_field_type(field) == datetime:
             return bigquery.enums.SqlTypeNames.TIMESTAMP
-        try:
-            if issubclass(cls.get_field_type(field), BaseModel):
-                return bigquery.enums.SqlTypeNames.RECORD
-        except TypeError:
-            print()
-
+        if issubclass(cls.get_field_type(field), BaseModel):
+            return bigquery.enums.SqlTypeNames.RECORD
         raise NotImplementedError(f"Unknown type: {field}")
 
     @classmethod
     def _get_schema_inner_fields(cls, field: FieldInfo | ComputedFieldInfo) -> List[bigquery.SchemaField]:
-        if issubclass(cls.get_field_type(field), BaseModel):
-            # FIXME:
-            return cls.get_bigquery_schema(field)
+        f = cls.get_field_type(field)
+        if issubclass(f, BigQueryModelBase):
+            sub_model = cls._get_fields_type(field).construct()
+            return cls.get_bigquery_schema(sub_model)
+        if issubclass(f, BaseModel):
+            raise NotImplementedError
+            sub_model = cls._get_fields_type(field).construct()
+            return cls.get_bigquery_schema(sub_model)
         return []
 
     @classmethod

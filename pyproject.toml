@@ -1,11 +1,11 @@
 [tool.poetry]
 name = "pydantic_bigquery"
-version = "0.3.4"
+version = "0.4.0"
 description = "BigQuery integration with Pydantic models"
 authors = ["Hynek Blaha <hynek.blaha.dev@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = ">=3.7,^3.11"
+python = ">=3.7"
 pydantic = "*"
 structlog = "*"
 google-cloud-bigquery = "^3.12.0"
